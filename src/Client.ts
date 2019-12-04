@@ -61,7 +61,7 @@ export class Client {
      * is requested. After that, `availableListCommands` will  hold only the first
      * entry that worked.
      */
-    availableListCommands = ["MLSD", "LIST -a", "LIST"]
+    availableListCommands = ["LIST -a", "MLSD", "LIST"]
     /** Low-level API to interact with FTP server. */
     readonly ftp: FTPContext
     /** Tracks progress of data transfers. */
@@ -74,7 +74,7 @@ export class Client {
      */
     constructor(timeout = 30000) {
         this.ftp = new FTPContext(timeout)
-        this.prepareTransfer = enterFirstCompatibleMode([enterPassiveModeIPv6, enterPassiveModeIPv4], this)
+        this.prepareTransfer = enterFirstCompatibleMode([enterPassiveModeIPv4, enterPassiveModeIPv6], this)
         this.parseList = parseListAutoDetect
         this._progressTracker = new ProgressTracker()
     }
