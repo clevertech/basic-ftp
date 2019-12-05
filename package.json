@@ -8,7 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "prepublishOnly": "npm run clean && npm run lint && tsc",
+    "prepublishOnly": "npm run clean && npm run lint && tsc && mocha",
     "test": "npm run prepublishOnly",
     "clean": "rimraf dist",
     "lint": "eslint \"./src/**/*.ts\"",
