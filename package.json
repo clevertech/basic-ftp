@@ -1,6 +1,6 @@
 {
   "name": "basic-ftp-ct",
-  "version": "4.5.2",
+  "version": "4.5.3",
   "description": "FTP client for Node.js, supports explicit FTPS over TLS, IPv6, Async/Await, and Typescript.",
   "main": "dist/index",
   "types": "dist/index",
@@ -8,7 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "prepublishOnly": "npm run clean && npm run lint && tsc && mocha",
+    "prepublishOnly": "npm run clean && npm run lint && tsc",
     "test": "npm run prepublishOnly",
     "clean": "rimraf dist",
     "lint": "eslint \"./src/**/*.ts\"",
@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/patrickjuchli/basic-ftp.git"
+    "url": "https://github.com/clevertech/basic-ftp.git"
   },
   "author": "Patrick Juchli <patrickjuchli@gmail.com>",
   "license": "MIT",
