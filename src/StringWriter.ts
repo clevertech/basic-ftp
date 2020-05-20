@@ -22,4 +22,12 @@ export class StringWriter extends Writable {
     getText(encoding: string) {
         return this.buf.toString(encoding)
     }
+
+    getTextAscii() {
+        return this.buf.toString('ascii')
+    }
+
+    getTextHex() {
+        return this.buf.toString('hex')
+    }
 }
