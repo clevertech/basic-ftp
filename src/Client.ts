@@ -544,6 +544,9 @@ export class Client {
             type: "list"
         })
         const text = buffer.getText(this.ftp.encoding)
+        this.ftp.log(buffer.getTextAscii())
+        this.ftp.log(buffer.getTextHex())
+        this.ftp.log(this.ftp.encoding)
         this.ftp.log(text)
         return this.parseList(text)
     }
