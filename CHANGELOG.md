@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.5.4
+
+- Fixed: Catch server closing connection without error. (#138)
+
+## 4.5.3
+
+- Fixed: Allow 'undefined' to be passed to trackProgress. (#125, @FabianMeul)
+
+## 4.5.2
+
+- Fixed: Try next available list command after any FTP error. (#117)
+
 ## 4.5.1
 
 - Fixed: Remove eager check for `remoteAddress` of a socket. (#106)
