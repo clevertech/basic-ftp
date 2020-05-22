@@ -1,12 +1,12 @@
 # Basic FTP
 
-[![Build Status](https://travis-ci.org/patrickjuchli/basic-ftp.svg?branch=master)](https://travis-ci.org/patrickjuchli/basic-ftp) [![npm version](https://img.shields.io/npm/v/basic-ftp.svg)](https://www.npmjs.com/package/basic-ftp)
+[![Build Status](https://travis-ci.org/patrickjuchli/basic-ftp.svg?branch=master)](https://travis-ci.org/patrickjuchli/basic-ftp) [![dependencies](https://img.shields.io/david/patrickjuchli/basic-ftp)](https://david-dm.org/patrickjuchli/basic-ftp) [![npm version](https://img.shields.io/npm/v/basic-ftp.svg)](https://www.npmjs.com/package/basic-ftp)
 
 This is an FTP client for Node.js. It supports explicit FTPS over TLS, Passive Mode over IPv6, has a Promise-based API, and offers methods to operate on whole directories.
 
 ## Advisory
 
-Prefer alternative transfer protocols like HTTPS or SFTP (SSH). Use this library when you have no choice and need to use FTP. Try to use FTPS whenever possible, FTP alone does not provide any security.
+Prefer alternative transfer protocols like HTTPS or SFTP (SSH). Use this library when you have no choice and need to use FTP. Try to use FTPS (FTP over TLS) whenever possible, FTP alone does not provide any security.
 
 ## Dependencies
 
@@ -165,7 +165,7 @@ Report any transfer progress using the given handler function. See the next sect
 
 ## Transfer Progress
 
-Set a callback function with `client.trackProgress` to track the progress of any transfer. Transfers are uploads, downloads or directory listings. To disable progress reporting, call `trackProgress` with an undefined handler.
+Set a callback function with `client.trackProgress` to track the progress of any transfer. Transfers are uploads, downloads or directory listings. To disable progress reporting, call `trackProgress` without a handler.
 
 ```js
 // Log progress for any transfer from now on.

@@ -161,7 +161,11 @@ export class FTPContext {
             socket.setEncoding(this._encoding)
             socket.setKeepAlive(true)
             socket.on("data", data => this._onControlSocketData(data))
-            this._setupErrorHandlers(socket, "control socket")
+            // Server sending a FIN packet is treated as an error.
+            socket.on("end", () => this.closeWithError(new Error("Server sent FIN packet unexpectedly, closing connection.")))
+            // Control being closed without error by server is treated as an error.
+            socket.on("close", hadError => { if (!hadError) this.closeWithError(new Error("Server closed connection unexpectedly.")) })
+            this._setupDefaultErrorHandlers(socket, "control socket")
         }
         this._socket = socket
     }
@@ -182,7 +186,7 @@ export class FTPContext {
             // Don't set a timeout yet. Timeout data socket should be activated when data transmission starts
             // and timeout on control socket is deactivated.
             socket.setTimeout(0)
-            this._setupErrorHandlers(socket, "data socket")
+            this._setupDefaultErrorHandlers(socket, "data socket")
         }
         this._dataSocket = socket
     }
@@ -352,7 +356,7 @@ export class FTPContext {
      * Setup all error handlers for a socket.
      * @protected
      */
-    protected _setupErrorHandlers(socket: Socket, identifier: string) {
+    protected _setupDefaultErrorHandlers(socket: Socket, identifier: string) {
         socket.once("error", error => {
             error.message += ` (${identifier})`
             this.closeWithError(error)
@@ -385,6 +389,7 @@ export class FTPContext {
         // Before Node.js 10.3.0, using `socket.removeAllListeners()` without any name did not work: https://github.com/nodejs/node/issues/20923.
         socket.removeAllListeners("timeout")
         socket.removeAllListeners("data")
+        socket.removeAllListeners("end")
         socket.removeAllListeners("error")
         socket.removeAllListeners("close")
         socket.removeAllListeners("connect")

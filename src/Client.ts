@@ -74,7 +74,7 @@ export class Client {
      */
     constructor(timeout = 30000) {
         this.ftp = new FTPContext(timeout)
-        this.prepareTransfer = enterFirstCompatibleMode([enterPassiveModeIPv4, enterPassiveModeIPv6], this)
+        this.prepareTransfer = this._enterFirstCompatibleMode([enterPassiveModeIPv6, enterPassiveModeIPv4])
         this.parseList = parseListAutoDetect
         this._progressTracker = new ProgressTracker()
     }
@@ -346,11 +346,11 @@ export class Client {
      * Report transfer progress for any upload or download to a given handler.
      *
      * This will also reset the overall transfer counter that can be used for multiple transfers. You can
-     * also pass `undefined` as a handler to stop reporting to an earlier one.
+     * also call the function without a handler to stop reporting to an earlier one.
      *
      * @param handler  Handler function to call on transfer progress.
      */
-    trackProgress(handler: ProgressHandler) {
+    trackProgress(handler?: ProgressHandler) {
         this._progressTracker.bytesOverall = 0
         this._progressTracker.reportTo(handler)
     }
@@ -521,8 +521,8 @@ export class Client {
                 return parsedList
             }
             catch (err) {
-                const maybeSyntaxError = err instanceof FTPError && err.code >= 500
-                if (!maybeSyntaxError) {
+                const shouldTryNext = err instanceof FTPError
+                if (!shouldTryNext) {
                     throw err
                 }
                 lastError = err
@@ -558,14 +558,14 @@ export class Client {
      * @example client.removeDir("/") // Remove everything.
      */
     async removeDir(remoteDirPath: string): Promise<void> {
-        return exitAtCurrentDirectory(async () => {
+        return this._exitAtCurrentDirectory(async () => {
             await this.cd(remoteDirPath)
             await this.clearWorkingDir()
             if (remoteDirPath !== "/") {
                 await this.cdup()
                 await this.removeEmptyDir(remoteDirPath)
             }
-        }, this)
+        })
     }
 
     /**
@@ -599,12 +599,12 @@ export class Client {
      * @param [remoteDirPath]  Remote path of a directory to upload to. Working directory if undefined.
      */
     async uploadFromDir(localDirPath: string, remoteDirPath?: string): Promise<void> {
-        return exitAtCurrentDirectory(async () => {
+        return this._exitAtCurrentDirectory(async () => {
             if (remoteDirPath) {
                 await this.ensureDir(remoteDirPath)
             }
             return await this._uploadToWorkingDir(localDirPath)
-        }, this)
+        })
     }
 
     /**
@@ -633,12 +633,12 @@ export class Client {
      * @param remoteDirPath  Remote directory to download. Current working directory if not specified.
      */
     async downloadToDir(localDirPath: string, remoteDirPath?: string): Promise<void> {
-        return exitAtCurrentDirectory(async () => {
+        return this._exitAtCurrentDirectory(async () => {
             if (remoteDirPath) {
                 await this.cd(remoteDirPath)
             }
             return await this._downloadFromWorkingDir(localDirPath)
-        }, this)
+        })
     }
 
     /**
@@ -707,6 +707,48 @@ export class Client {
         return absolutePathPrefix + path
     }
 
+    protected async _exitAtCurrentDirectory<T>(func: () => Promise<T>): Promise<T> {
+        const userDir = await this.pwd()
+        try {
+            return await func()
+        }
+        finally {
+            if (!this.closed) {
+                await ignoreError(() => this.cd(userDir))
+            }
+        }
+    }
+
+    /**
+     * Try all available transfer strategies and pick the first one that works. Update `client` to
+     * use the working strategy for all successive transfer requests.
+     *
+     * @param strategies
+     * @returns a function that will try the provided strategies.
+     */
+    protected _enterFirstCompatibleMode(strategies: TransferStrategy[]): TransferStrategy {
+        return async (ftp: FTPContext) => {
+            ftp.log("Trying to find optimal transfer strategy...")
+            for (const strategy of strategies) {
+                try {
+                    const res = await strategy(ftp)
+                    ftp.log("Optimal transfer strategy found.")
+                    this.prepareTransfer = strategy // eslint-disable-line require-atomic-updates
+                    return res
+                }
+                catch(err) {
+                    // Receiving an FTPError means that the last transfer strategy failed and we should
+                    // try the next one. Any other exception should stop the evaluation of strategies because
+                    // something else went wrong.
+                    if (!(err instanceof FTPError)) {
+                        throw err
+                    }
+                }
+            }
+            throw new Error("None of the available transfer strategies work.")
+        }
+    }
+
     /**
      * DEPRECATED, use `uploadFrom`.
      * @deprecated
@@ -753,36 +795,6 @@ export class Client {
     }
 }
 
-/**
- * Try all available transfer strategies and pick the first one that works. Update `client` to
- * use the working strategy for all successive transfer requests.
- *
- * @param strategies
- * @returns a function that will try the provided strategies.
- */
-export function enterFirstCompatibleMode(strategies: TransferStrategy[], client: Client): TransferStrategy {
-    return async function autoDetect(ftp) {
-        ftp.log("Trying to find optimal transfer strategy...")
-        for (const strategy of strategies) {
-            try {
-                const res = await strategy(ftp)
-                ftp.log("Optimal transfer strategy found.")
-                client.prepareTransfer = strategy // eslint-disable-line require-atomic-updates
-                return res
-            }
-            catch(err) {
-                // Receiving an FTPError means that the last transfer strategy failed and we should
-                // try the next one. Any other exception should stop the evaluation of strategies because
-                // something else went wrong.
-                if (!(err instanceof FTPError)) {
-                    throw err
-                }
-            }
-        }
-        throw new Error("None of the available transfer strategies work.")
-    }
-}
-
 async function ensureLocalDirectory(path: string) {
     try {
         await fsStat(path)
@@ -799,17 +811,5 @@ async function ignoreError<T>(func: () => Promise<T | undefined>) {
     catch(err) {
         // Ignore
         return undefined
-    }
-}
-
-async function exitAtCurrentDirectory<T>(func: () => Promise<T>, client: Client): Promise<T> {
-    const userDir = await client.pwd()
-    try {
-        return await func()
-    }
-    finally {
-        if (!client.closed) {
-            await ignoreError(() => client.cd(userDir))
-        }
     }
 }
