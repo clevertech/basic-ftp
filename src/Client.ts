@@ -61,7 +61,7 @@ export class Client {
      * is requested. After that, `availableListCommands` will  hold only the first
      * entry that worked.
      */
-    availableListCommands = ["LIST -a", "MLSD", "LIST"]
+    availableListCommands = [ "MLSD", "LIST", "LIST -a"]
     /** Low-level API to interact with FTP server. */
     readonly ftp: FTPContext
     /** Tracks progress of data transfers. */
