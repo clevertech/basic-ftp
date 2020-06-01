@@ -61,7 +61,7 @@ export class Client {
      * is requested. After that, `availableListCommands` will  hold only the first
      * entry that worked.
      */
-    availableListCommands = [ "MLSD", "LIST", "LIST -a"]
+    availableListCommands = [ "MLSD", "LIST -a", "LIST"]
     /** Low-level API to interact with FTP server. */
     readonly ftp: FTPContext
     /** Tracks progress of data transfers. */
@@ -510,15 +510,25 @@ export class Client {
      */
     async list(path = ""): Promise<FileInfo[]> {
         const validPath = await this.protectWhitespace(path)
+        const successfulParsedList = []
         let lastError: any
-        for (const candidate of this.availableListCommands) {
+        for (let i = 0; i < this.availableListCommands.length; i++) {
+            const candidate = this.availableListCommands[i]
             const command = `${candidate} ${validPath}`.trim()
             await this.prepareTransfer(this.ftp)
             try {
                 const parsedList = await this._requestListWithCommand(command)
-                // Use successful candidate for all subsequent requests.
-                this.availableListCommands = [ candidate ]
-                return parsedList
+                // Check the parsed list to make sure that the command is returning correct data. Store the candidates and use first one
+                if (parsedList.length !== 0) {
+                  this.availableListCommands = [candidate]
+                  return parsedList
+                // check if it is last element in the array
+                } else if ((i + 1) === this.availableListCommands.length) {
+                  this.availableListCommands = successfulParsedList[0]
+                  return parsedList
+                } else {
+                  successfulParsedList.push([candidate])
+                }
             }
             catch (err) {
                 const shouldTryNext = err instanceof FTPError
