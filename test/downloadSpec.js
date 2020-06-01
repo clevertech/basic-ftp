@@ -168,7 +168,7 @@ describe("Download directory listing", function() {
 
     it("sends the right default command", function() {
         client.ftp.socket.once("didSend", command => {
-            assert.equal(command, "LIST -a\r\n");
+            assert.equal(command, "MLSD\r\n");
             sendCompleteList()
         });
         // This will throw an unhandled exception because we close the client when
@@ -179,7 +179,7 @@ describe("Download directory listing", function() {
 
     it("sends the right default command with optional path", function() {
         client.ftp.socket.once("didSend", command => {
-            assert.equal(command, "LIST -a my/path\r\n", "Unexpected list command");
+            assert.equal(command, "MLSD my/path\r\n", "Unexpected list command");
             sendCompleteList()
         });
         // This will throw an unhandled exception because we close the client when
@@ -189,7 +189,7 @@ describe("Download directory listing", function() {
     });
 
     it("tries all other list commands if default one fails", function() {
-        const expectedCandidates = ["LIST -a", "MLSD", "LIST"]
+        const expectedCandidates = ["MLSD", "LIST -a", "LIST"]
         client.ftp.socket.on("didSend", command => {
             const expected = expectedCandidates.shift()
             assert.equal(command, expected + "\r\n", "Unexpected list command candidate");
@@ -217,7 +217,7 @@ describe("Download directory listing", function() {
     it("uses first successful list command for all subsequent requests", function() {
         const promise = client.list().then(result => {
             assert.deepEqual(result, expList);
-            assert.deepEqual(["LIST -a"], client.availableListCommands)
+            assert.deepEqual(["MLSD"], client.availableListCommands)
         });
         setTimeout(() => sendCompleteList());
         return promise
