@@ -189,7 +189,7 @@ describe("Download directory listing", function() {
     });
 
     it("tries all other list commands if default one fails", function() {
-        const expectedCandidates = ["MLSD", "LIST", "LIST -a"]
+        const expectedCandidates = ["MLSD", "LIST -a", "LIST"]
         client.ftp.socket.on("didSend", command => {
             const expected = expectedCandidates.shift()
             assert.equal(command, expected + "\r\n", "Unexpected list command candidate");
