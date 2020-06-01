@@ -522,6 +522,7 @@ export class Client {
                 if (parsedList.length !== 0) {
                   this.availableListCommands = [candidate]
                   return parsedList
+                // Decrementing iterator, once it is 0 we know it is the last iteration and we should use the first successful candidate. 
                 } else if (!--listCommandsIterator) {
                   this.availableListCommands = successfulParsedList[0]
                   return parsedList
