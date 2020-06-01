@@ -511,9 +511,9 @@ export class Client {
     async list(path = ""): Promise<FileInfo[]> {
         const validPath = await this.protectWhitespace(path)
         const successfulParsedList = []
-        let listCommandsIterator = this.availableListCommands.length
         let lastError: any
-        for (const candidate of this.availableListCommands) {
+        for (let i = 0; i < this.availableListCommands.length; i++) {
+            const candidate = this.availableListCommands[i]
             const command = `${candidate} ${validPath}`.trim()
             await this.prepareTransfer(this.ftp)
             try {
@@ -522,8 +522,8 @@ export class Client {
                 if (parsedList.length !== 0) {
                   this.availableListCommands = [candidate]
                   return parsedList
-                // Decrementing iterator, once it is 0 we know it is the last iteration and we should use the first successful candidate. 
-                } else if (!--listCommandsIterator) {
+                // check if it is last element in the array
+                } else if ((i + 1) === this.availableListCommands.length) {
                   this.availableListCommands = successfulParsedList[0]
                   return parsedList
                 } else {
