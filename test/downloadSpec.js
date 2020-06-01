@@ -217,7 +217,7 @@ describe("Download directory listing", function() {
     it("uses first successful list command for all subsequent requests", function() {
         const promise = client.list().then(result => {
             assert.deepEqual(result, expList);
-            assert.deepEqual(["LIT -a"], client.availableListCommands)
+            assert.deepEqual(["LIST -a"], client.availableListCommands)
         });
         setTimeout(() => sendCompleteList());
         return promise
