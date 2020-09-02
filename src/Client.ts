@@ -508,27 +508,22 @@ export class Client {
      *
      * @param [path]  Path to remote file or directory.
      */
+
+
+
+
     async list(path = ""): Promise<FileInfo[]> {
         const validPath = await this.protectWhitespace(path)
-        const successfulParsedList = []
         let lastError: any
-        for (let i = 0; i < this.availableListCommands.length; i++) {
-            const candidate = this.availableListCommands[i]
+        for (const candidate of this.availableListCommands) {
             const command = `${candidate} ${validPath}`.trim()
             await this.prepareTransfer(this.ftp)
             try {
                 const parsedList = await this._requestListWithCommand(command)
-                // Check the parsed list to make sure that the command is returning correct data. Store the candidates and use first one
-                if (parsedList.length !== 0) {
-                  this.availableListCommands = [candidate]
-                  return parsedList
-                // check if it is last element in the array
-                } else if ((i + 1) === this.availableListCommands.length) {
-                  this.availableListCommands = successfulParsedList[0]
-                  return parsedList
-                } else {
-                  successfulParsedList.push([candidate])
-                }
+                if (!parsedList.length) continue // THIS LINE WAS ADDED!!!!
+                // Use successful candidate for all subsequent requests.
+                this.availableListCommands = [ candidate ]
+                return parsedList
             }
             catch (err) {
                 const shouldTryNext = err instanceof FTPError
@@ -538,6 +533,7 @@ export class Client {
                 lastError = err
             }
         }
+        if (!lastError) return [] // THIS LINE WAS ADDED!!!!
         throw lastError
     }
 
