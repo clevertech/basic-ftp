@@ -749,7 +749,7 @@ export class Client {
                     // Receiving an FTPError means that the last transfer strategy failed and we should
                     // try the next one. Any other exception should stop the evaluation of strategies because
                     // something else went wrong.
-                    if (!(err instanceof FTPError)) {
+                    if (!(err instanceof FTPError) && err.code as unknown !== 'ECONNREFUSED') {
                         throw err
                     }
                 }
