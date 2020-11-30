@@ -515,25 +515,29 @@ export class Client {
     async list(path = ""): Promise<FileInfo[]> {
         const validPath = await this.protectWhitespace(path)
         let lastError: any
+        let emptyListReceived = false
         for (const candidate of this.availableListCommands) {
             const command = `${candidate} ${validPath}`.trim()
             await this.prepareTransfer(this.ftp)
             try {
                 const parsedList = await this._requestListWithCommand(command)
-                if (!parsedList.length) continue // THIS LINE WAS ADDED!!!!
+                if (!parsedList.length) {
+                    emptyListReceived = true
+                    continue // THIS LINE WAS ADDED!!!!
+                }
                 // Use successful candidate for all subsequent requests.
                 this.availableListCommands = [ candidate ]
                 return parsedList
             }
             catch (err) {
-                const shouldTryNext = err instanceof FTPError
-                if (!shouldTryNext) {
-                    throw err
-                }
+                // const shouldTryNext = err instanceof FTPError
+                // if (!shouldTryNext) {
+                //     throw err
+                // }
                 lastError = err
             }
         }
-        if (!lastError) return [] // THIS LINE WAS ADDED!!!!
+        if (emptyListReceived) return [] // THIS LINE WAS ADDED!!!!
         throw lastError
     }
 
